@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>AI Epoch</title>
 <style>
 :root {
@@ -14,45 +14,51 @@
   --accent: #58a6ff;
   --accent2: #3fb950;
   --danger: #f85149;
+  --accent-bg: rgba(88,166,255,.1);
+  --radius: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,.3);
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
   background: var(--bg);
   color: var(--text);
-  height: 100vh;
+  height: 100vh; height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* Header */
+/* ── Header ── */
 .header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   padding: 10px 16px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
+  z-index: 50;
 }
 .header .logo {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--accent);
+  letter-spacing: -.3px;
 }
 .header .spacer { flex: 1; }
 .header .status {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-dim);
 }
 .status-dot {
-  width: 8px; height: 8px;
+  width: 7px; height: 7px;
   border-radius: 50%;
   background: var(--accent2);
+  flex-shrink: 0;
 }
 .status-dot.off { background: var(--danger); }
 .btn {
@@ -60,16 +66,19 @@ body {
   color: var(--text);
   border: 1px solid var(--border);
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius);
   cursor: pointer;
   font-size: 12px;
   transition: all .2s;
+  font-family: inherit;
+  white-space: nowrap;
 }
 .btn:hover { background: #3a3f4b; border-color: var(--accent); }
 .btn.accent { background: var(--accent); color: #fff; border-color: var(--accent); }
 .btn.accent:hover { opacity: 0.85; }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
 
-/* Chat area */
+/* ── Chat Area ── */
 .chat-area {
   flex: 1;
   display: flex;
@@ -86,6 +95,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  scroll-behavior: smooth;
 }
 .message {
   max-width: 85%;
@@ -95,9 +105,7 @@ body {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.message.user {
-  align-self: flex-end;
-}
+.message.user { align-self: flex-end; }
 .message.user .bubble {
   background: var(--accent);
   color: #fff;
@@ -108,9 +116,7 @@ body {
   white-space: pre-wrap;
   word-break: break-word;
 }
-.message.agent {
-  align-self: flex-start;
-}
+.message.agent { align-self: flex-start; }
 .message.agent .bubble {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -122,7 +128,42 @@ body {
   word-break: break-word;
 }
 
-/* Input */
+/* ── Suggestion Chips ── */
+.suggest-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 8px;
+  padding-left: 4px;
+  align-self: flex-start;
+  max-width: 85%;
+}
+.suggest-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 13px;
+  font-size: 12px;
+  font-family: inherit;
+  background: var(--accent-bg);
+  border: 1px solid rgba(88,166,255,.25);
+  border-radius: 20px;
+  color: var(--accent);
+  cursor: pointer;
+  transition: all .2s;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.suggest-chip:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(88,166,255,.3);
+}
+.suggest-chip:active { transform: scale(.96); }
+
+/* ── Input Area ── */
 .input-area {
   background: var(--surface);
   border-top: 1px solid var(--border);
@@ -135,21 +176,18 @@ body {
   flex: 1;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   padding: 10px 14px;
   color: var(--text);
   font-size: 14px;
+  font-family: inherit;
   outline: none;
   transition: border-color .2s;
 }
-.input-area input:focus {
-  border-color: var(--accent);
-}
-.input-area input::placeholder {
-  color: var(--text-dim);
-}
+.input-area input:focus { border-color: var(--accent); }
+.input-area input::placeholder { color: var(--text-dim); }
 
-/* Loading */
+/* ── Typing Indicator ── */
 .typing-indicator {
   display: flex;
   gap: 4px;
@@ -168,12 +206,35 @@ body {
   30% { transform: translateY(-6px); opacity: 1; }
 }
 
-/* Settings modal */
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 13px;
+  color: var(--text);
+  opacity: 0;
+  pointer-events: none;
+  transition: all .3s;
+  z-index: 200;
+  box-shadow: var(--shadow);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.err { border-color: var(--danger); color: var(--danger); }
+
+/* ── Settings Modal ── */
 .modal-overlay {
   display: none;
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   z-index: 100;
   justify-content: center;
   align-items: center;
@@ -182,42 +243,125 @@ body {
 .modal {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 24px;
-  width: 500px;
-  max-width: 90vw;
-  max-height: 80vh;
+  width: 520px;
+  max-width: 92vw;
+  max-height: 85vh;
+  max-height: 85dvh;
   overflow-y: auto;
+  box-shadow: var(--shadow);
 }
-.modal h3 { margin-bottom: 16px; color: var(--accent); }
-.form-group {
-  margin-bottom: 14px;
-}
+.modal h3 { margin-bottom: 18px; color: var(--accent); font-size: 16px; }
+.form-group { margin-bottom: 14px; }
 .form-group label {
   display: block;
   font-size: 12px;
   color: var(--text-dim);
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
-.form-group input {
+.form-group input,
+.form-group select {
   width: 100%;
-  padding: 8px 12px;
+  padding: 9px 12px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius);
   color: var(--text);
   font-size: 13px;
+  font-family: inherit;
   outline: none;
 }
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
   border-color: var(--accent);
 }
+.form-group select { cursor: pointer; }
+.form-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.form-row select { flex: 1; }
 .form-actions {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
-  margin-top: 16px;
+  margin-top: 18px;
 }
+.models-status {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  min-height: 16px;
+}
+
+/* ── Empty state quick-starts ── */
+.quick-starts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px 6px;
+  justify-content: center;
+}
+.quick-starts .suggest-chip {
+  font-size: 11px;
+  padding: 4px 11px;
+}
+.quick-label {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  padding-top: 6px;
+}
+
+/* ── MOBILE ── */
+@media(max-width:768px) {
+  .header { padding: 8px 12px; gap: 8px; }
+  .header .logo { font-size: 15px; }
+  .header .status { font-size: 10px; }
+  .header .status span:last-child { display: none; }
+  .btn { padding: 5px 10px; font-size: 11px; }
+  .messages { padding: 12px; gap: 10px; }
+  .message { max-width: 92%; }
+  .message.agent .bubble,
+  .message.user .bubble { font-size: 13px; padding: 10px 13px; border-radius: 12px; }
+  .message.user .bubble { border-radius: 12px 12px 4px 12px; }
+  .message.agent .bubble { border-radius: 12px 12px 12px 4px; }
+  .suggest-chips { gap: 5px; margin-top: 6px; }
+  .suggest-chip { padding: 4px 10px; font-size: 11px; }
+  .input-area { padding: 10px 12px; gap: 8px; }
+  .input-area input { padding: 9px 12px; font-size: 13px; }
+  .modal { padding: 18px; max-width: 96vw; border-radius: 12px; }
+  .modal h3 { font-size: 14px; margin-bottom: 12px; }
+  .form-group { margin-bottom: 10px; }
+  .form-group input,
+  .form-group select { padding: 8px 10px; font-size: 12px; }
+  .toast { bottom: 70px; font-size: 12px; padding: 8px 16px; left: 16px; right: 16px; transform: translateX(0) translateY(20px); }
+  .toast.show { transform: translateX(0) translateY(0); }
+  .quick-starts { padding: 8px 10px 4px; gap: 6px; }
+}
+@media(max-width:400px) {
+  .header { padding: 6px 8px; }
+  .header .logo { font-size: 14px; }
+  .btn { padding: 5px 8px; font-size: 10px; border-radius: 6px; }
+  .messages { padding: 8px; gap: 8px; }
+  .message { max-width: 94%; }
+  .message.agent .bubble,
+  .message.user .bubble { font-size: 12px; padding: 8px 10px; }
+  .suggest-chip { padding: 3px 9px; font-size: 10px; }
+  .input-area { padding: 8px; gap: 6px; }
+  .input-area input { padding: 8px 10px; font-size: 12px; }
+  .modal { padding: 14px; }
+}
+
+/* scrollbar */
+.messages::-webkit-scrollbar { width: 5px; }
+.messages::-webkit-scrollbar-track { background: transparent; }
+.messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+.modal::-webkit-scrollbar { width: 4px; }
+.modal::-webkit-scrollbar-track { background: transparent; }
+.modal::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 </style>
 </head>
 <body>
@@ -238,8 +382,19 @@ body {
     <div class="message agent">
       <div class="bubble">
         你好！我是 AI Epoch，你的智能 AI 助手。<br><br>
-        试试问我：<br>• "Python 中如何实现多线程？"<br>• "帮我写一段快速排序的代码"<br>• "推荐几本程序员的必读书籍"
+        有什么事我可以帮你？
       </div>
+    </div>
+    <div class="quick-label">⚡ 快捷提问</div>
+    <div class="quick-starts" id="quickStarts">
+      <button class="suggest-chip" data-text="Python 中如何实现多线程？" onclick="pickQuick(this)">Python 多线程</button>
+      <button class="suggest-chip" data-text="帮我写一段快速排序的代码" onclick="pickQuick(this)">快速排序代码</button>
+      <button class="suggest-chip" data-text="推荐几本程序员必读的书" onclick="pickQuick(this)">程序员书单</button>
+      <button class="suggest-chip" data-text="解释一下什么是 RESTful API" onclick="pickQuick(this)">RESTful API</button>
+      <button class="suggest-chip" data-text="如何学习一门新的编程语言？" onclick="pickQuick(this)">学习方法</button>
+      <button class="suggest-chip" data-text="对比一下 Python 和 JavaScript" onclick="pickQuick(this)">语言对比</button>
+      <button class="suggest-chip" data-text="Docker 是什么？有什么用？" onclick="pickQuick(this)">Docker入门</button>
+      <button class="suggest-chip" data-text="给我讲一个有趣的编程冷笑话" onclick="pickQuick(this)">编程笑话</button>
     </div>
   </div>
 
@@ -252,10 +407,13 @@ body {
   </div>
 </div>
 
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
 <!-- Settings Modal -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
-    <h3>设置</h3>
+    <h3>⚙ 设置</h3>
     <div class="form-group">
       <label>API 地址 (OpenAI 兼容)</label>
       <input type="text" id="cfgApiBase" placeholder="https://api.openai.com/v1">
@@ -265,8 +423,13 @@ body {
       <input type="password" id="cfgApiKey" placeholder="sk-...">
     </div>
     <div class="form-group">
-      <label>模型</label>
-      <input type="text" id="cfgModel" placeholder="gpt-4o-mini">
+      <label>模型 <button class="btn btn-sm" onclick="fetchModels()" id="btnFetchModels">📡 获取模型列表</button></label>
+      <div class="form-row">
+        <select id="cfgModel">
+          <option value="">-- 请先获取模型列表 --</option>
+        </select>
+      </div>
+      <div class="models-status" id="modelsStatus"></div>
     </div>
     <div class="form-actions">
       <button class="btn" onclick="toggleSettings()">取消</button>
@@ -280,12 +443,27 @@ body {
 // State
 // ============================================================
 let isLoading = false;
+let _loadedModels = null;
+let _modelsState = 0; // 0=not fetched, 1=loading, 2=loaded
+
+// ============================================================
+// Toast
+// ============================================================
+let _toastTimer = null;
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type === 'err' ? ' err' : '');
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
 
 // ============================================================
 // Init
 // ============================================================
 async function init() {
   await Promise.all([loadStatus(), loadConfig()]);
+  _preloadModels();
 }
 init();
 
@@ -308,8 +486,67 @@ async function loadConfig() {
     const d = await r.json();
     document.getElementById('cfgApiBase').value = d.ai?.api_base || '';
     document.getElementById('cfgApiKey').value = d.ai?.api_key || '';
-    document.getElementById('cfgModel').value = d.ai?.model || '';
+    populateModelSelect(d.ai?.model || '');
   } catch(e) { /* ignore */ }
+}
+
+function populateModelSelect(currentModel) {
+  const sel = document.getElementById('cfgModel');
+  let opts = '<option value="">-- 请选择模型 --</option>';
+  if (currentModel) {
+    opts += `<option value="${escHtml(currentModel)}" selected>${escHtml(currentModel)} (当前)</option>`;
+  }
+  if (_loadedModels && _loadedModels.length > 0) {
+    for (const m of _loadedModels) {
+      if (m.id === currentModel) continue;
+      opts += `<option value="${escHtml(m.id)}">${escHtml(m.id)}</option>`;
+    }
+  }
+  sel.innerHTML = opts;
+}
+
+async function _preloadModels() {
+  try {
+    const r = await fetch('/api/models/list');
+    const d = await r.json();
+    if (d.ok && d.models) {
+      _loadedModels = d.models;
+      _modelsState = 2;
+      const sel = document.getElementById('cfgModel');
+      const cur = sel.value;
+      populateModelSelect(cur || _currentSavedModel || '');
+    }
+  } catch(e) { /* silent */ }
+}
+
+// ============================================================
+// Model List
+// ============================================================
+let _currentSavedModel = '';
+async function fetchModels() {
+  if (_modelsState === 1) return;
+  _modelsState = 1;
+  const btn = document.getElementById('btnFetchModels');
+  const status = document.getElementById('modelsStatus');
+  if (btn) btn.textContent = '⏳ 获取中...';
+  if (status) status.textContent = '正在获取模型列表...';
+  try {
+    const r = await fetch('/api/models/list');
+    const d = await r.json();
+    if (!d.ok) { toast(d.message, 'err'); if (status) status.textContent = d.message; _modelsState = 0; if (btn) btn.textContent = '🔄 重试'; return; }
+    _loadedModels = d.models || [];
+    _modelsState = 2;
+    if (status) status.textContent = `✅ 找到 ${d.count} 个模型`;
+    if (btn) btn.textContent = '🔄 刷新列表';
+    const sel = document.getElementById('cfgModel');
+    const cur = sel.value;
+    populateModelSelect(cur);
+    toast(`加载了 ${d.count} 个模型`);
+  } catch(e) {
+    if (status) status.textContent = '获取失败: ' + e.message;
+    _modelsState = 0;
+    if (btn) btn.textContent = '🔄 重试';
+  }
 }
 
 // ============================================================
@@ -318,9 +555,53 @@ async function loadConfig() {
 function addMessage(role, text) {
   const div = document.createElement('div');
   div.className = `message ${role}`;
-  div.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
+  div.innerHTML = `<div class="bubble">${escHtml(text)}</div>`;
   document.getElementById('messages').appendChild(div);
   scrollBottom();
+  return div;
+}
+
+function addSuggestions(rawReply) {
+  const marker = '---SUGGESTIONS---';
+  const idx = rawReply.indexOf(marker);
+  if (idx === -1) return;
+  const block = rawReply.substring(idx + marker.length).trim();
+  const lines = block.split('\n');
+  const suggestions = [];
+  for (const line of lines) {
+    const s = line.replace(/^[-*•]\s*/, '').trim();
+    if (s && s.length > 1 && s.length < 80) suggestions.push(s);
+  }
+  // dedup
+  const uniq = [...new Set(suggestions)].slice(0, 5);
+  if (uniq.length === 0) return;
+
+  const chips = document.createElement('div');
+  chips.className = 'suggest-chips';
+  for (const sug of uniq) {
+    const btn = document.createElement('button');
+    btn.className = 'suggest-chip';
+    btn.textContent = '💡 ' + sug;
+    btn.setAttribute('data-text', sug);
+    btn.onclick = function() { pickSuggestion(this); };
+    chips.appendChild(btn);
+  }
+  document.getElementById('messages').appendChild(chips);
+  scrollBottom();
+}
+
+function pickSuggestion(el) {
+  const txt = (el.getAttribute('data-text') || '').trim();
+  if (!txt) return;
+  document.getElementById('userInput').value = txt;
+  sendMessage();
+}
+
+function pickQuick(el) {
+  const txt = (el.getAttribute('data-text') || '').trim();
+  if (!txt) return;
+  document.getElementById('userInput').value = txt;
+  sendMessage();
 }
 
 function addTyping() {
@@ -339,7 +620,7 @@ function removeTyping() {
 
 function scrollBottom() {
   const msgs = document.getElementById('messages');
-  setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 50);
+  setTimeout(() => { msgs.scrollTop = msgs.scrollHeight; }, 50);
 }
 
 async function sendMessage() {
@@ -368,7 +649,15 @@ async function sendMessage() {
     if (d.error) {
       addMessage('agent', `错误: ${d.error}`);
     } else {
-      addMessage('agent', d.reply);
+      // Parse suggestions
+      const marker = '---SUGGESTIONS---';
+      const idx = (d.reply || '').indexOf(marker);
+      const visibleReply = idx !== -1
+        ? d.reply.substring(0, idx).trim()
+        : d.reply;
+      addMessage('agent', visibleReply);
+      // Add suggestion chips
+      addSuggestions(d.reply);
     }
   } catch(e) {
     removeTyping();
@@ -386,6 +675,17 @@ async function resetChat() {
     <div class="message agent">
       <div class="bubble">对话已重置。有什么我可以帮你的？</div>
     </div>
+    <div class="quick-label">⚡ 快捷提问</div>
+    <div class="quick-starts" id="quickStarts">
+      <button class="suggest-chip" data-text="Python 中如何实现多线程？" onclick="pickQuick(this)">Python 多线程</button>
+      <button class="suggest-chip" data-text="帮我写一段快速排序的代码" onclick="pickQuick(this)">快速排序代码</button>
+      <button class="suggest-chip" data-text="推荐几本程序员必读的书" onclick="pickQuick(this)">程序员书单</button>
+      <button class="suggest-chip" data-text="解释一下什么是 RESTful API" onclick="pickQuick(this)">RESTful API</button>
+      <button class="suggest-chip" data-text="如何学习一门新的编程语言？" onclick="pickQuick(this)">学习方法</button>
+      <button class="suggest-chip" data-text="对比一下 Python 和 JavaScript" onclick="pickQuick(this)">语言对比</button>
+      <button class="suggest-chip" data-text="Docker 是什么？有什么用？" onclick="pickQuick(this)">Docker入门</button>
+      <button class="suggest-chip" data-text="给我讲一个有趣的编程冷笑话" onclick="pickQuick(this)">编程笑话</button>
+    </div>
   `;
 }
 
@@ -393,20 +693,24 @@ async function resetChat() {
 // Settings
 // ============================================================
 function toggleSettings() {
-  document.getElementById('settingsModal').classList.toggle('show');
-  if (document.getElementById('settingsModal').classList.contains('show')) {
+  const modal = document.getElementById('settingsModal');
+  modal.classList.toggle('show');
+  if (modal.classList.contains('show')) {
     loadConfig();
   }
 }
 
 async function saveSettings() {
+  const sel = document.getElementById('cfgModel');
+  const modelVal = sel.tagName === 'SELECT' ? sel.value : sel.value.trim();
   const data = {
     ai: {
       api_base: document.getElementById('cfgApiBase').value.trim(),
       api_key: document.getElementById('cfgApiKey').value.trim(),
-      model: document.getElementById('cfgModel').value.trim()
+      model: modelVal
     }
   };
+  _currentSavedModel = modelVal;
 
   try {
     const r = await fetch('/api/config', {
@@ -419,14 +723,14 @@ async function saveSettings() {
     await loadStatus();
     addMessage('agent', '设置已保存并生效。');
   } catch(e) {
-    alert('保存失败: ' + e.message);
+    toast('保存失败: ' + e.message, 'err');
   }
 }
 
 // ============================================================
 // Helpers
 // ============================================================
-function escapeHtml(text) {
+function escHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;

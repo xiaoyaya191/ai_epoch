@@ -5,9 +5,10 @@ AI Epoch - Flask Web 服务
 纯 AI 聊天，无 Agent/工具操控
 """
 
-import os, sys, json, yaml, traceback, httpx
+import os, sys, json, yaml, ssl, traceback, httpx
 from pathlib import Path
 from datetime import datetime
+from urllib.request import Request, urlopen
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
@@ -80,6 +81,30 @@ class AIBackend:
         data = resp.json()
         return data["choices"][0]["message"]["content"]
 
+    def list_models(self) -> list[dict]:
+        """获取可用模型列表"""
+        url = f"{self.api_base}/models"
+        req = Request(url, headers={
+            "Authorization": f"Bearer {self.api_key}",
+            "User-Agent": "ai_epoch/1.0",
+        })
+        ctx = ssl.create_default_context()
+        with urlopen(req, timeout=15, context=ctx) as resp:
+            data = json.loads(resp.read())
+        raw = data.get("data", data if isinstance(data, list) else [])
+        models = []
+        skip_kw = ["embed", "moderation", "dall-e", "tts", "whisper", "audio", "image", "video", "realtime"]
+        for m in raw:
+            mid = m.get("id", "") if isinstance(m, dict) else str(m)
+            if not mid:
+                continue
+            low = mid.lower()
+            if any(kw in low for kw in skip_kw):
+                continue
+            models.append({"id": mid, "owned_by": m.get("owned_by", "") if isinstance(m, dict) else ""})
+        models.sort(key=lambda x: x["id"])
+        return models
+
 # ============================================================
 # 聊天管理
 # ============================================================
@@ -94,7 +119,15 @@ SYSTEM_PROMPT = """你是 AI Epoch，一个智能 AI 助手。
 
 ## 当前环境
 - 当前时间: {time}
-"""
+
+## 推荐追问
+每次回复末尾必须附带 2-3 条推荐追问或操作建议，用以下格式输出（方便前端渲染为可点击按钮）：
+---SUGGESTIONS---
+- 简洁的推荐追问1（每条不超过30字）
+- 简洁的推荐追问2
+- 简洁的推荐追问3
+
+要求：必须严格使用 ---SUGGESTIONS--- 作为分隔标记，每条建议独立一行以 "- " 开头，建议要与当前对话内容相关。"""
 
 class ChatSession:
     """聊天会话管理"""
@@ -170,6 +203,22 @@ def api_status():
         "api_configured": bool(cfg_ai.get("api_key", "")),
         "time": datetime.now().isoformat()
     })
+
+
+@app.route('/api/models/list')
+def api_models_list():
+    """从配置的 API 端点获取可用模型列表"""
+    cfg_ai = config.get("ai", {})
+    api_key = cfg_ai.get("api_key", "")
+    api_base = cfg_ai.get("api_base", "")
+    if not api_key or not api_base:
+        return jsonify({"ok": False, "message": "请先配置 API Key 和地址", "models": []})
+    try:
+        ai = get_ai()
+        models = ai.list_models()
+        return jsonify({"ok": True, "models": models, "count": len(models)})
+    except Exception as e:
+        return jsonify({"ok": False, "message": f"获取失败: {str(e)}", "models": [], "error": str(e)})
 
 
 @app.route('/api/config', methods=['GET', 'POST'])
